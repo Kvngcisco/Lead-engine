@@ -109,6 +109,9 @@ async function generate(request: NextRequest) {
     return NextResponse.json({ ok: true, date: today, found: created.length + remainingPool.length, added: created.length, failedTownQueries, batchSize: limit, queued: remainingPool.length, totalStored: store.leads.length, emailCount: created.filter((lead) => lead.email !== NO_EMAIL).length }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Lead generation failed:', error instanceof Error ? error.stack : JSON.stringify(error));
-    return NextResponse.json({ error: 'Lead generation failed. Check the function logs and retry.' }, { status: 500 });
+    const message = error instanceof Error && error.message === 'KV_UNAVAILABLE'
+      ? 'Could not save leads: the Upstash Redis connection failed. Check KV_REST_API_URL and KV_REST_API_TOKEN in Vercel settings.'
+      : 'Lead generation failed. Check the function logs and retry.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
